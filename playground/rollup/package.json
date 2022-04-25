@@ -1,0 +1,14 @@
+{
+  "private": true,
+  "scripts": {
+    "dev": "nodemon --watch '../../src/**/*.ts' --ext .ts --exec 'rollup -c -w'",
+    "dev:build": "nodemon --watch '../../src/**/*.ts' --ext .ts --exec 'rollup -c'"
+  },
+  "devDependencies": {
+    "@rollup/plugin-html": "^0.2.4",
+    "@rollup/plugin-typescript": "^8.3.2",
+    "rollup": "^2.70.2",
+    "rollup-plugin-terser": "^7.0.2",
+    "tslib": "^2.4.0"
+  }
+}

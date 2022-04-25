@@ -1,0 +1,13 @@
+{
+  "private": true,
+  "scripts": {
+    "dev": "nodemon --watch '../../src/**/*.ts' --ext .ts --exec 'esno build.ts'",
+    "dev:build": "nodemon --watch '../../src/**/*.ts' --ext .ts --exec 'esno build.ts --production'"
+  },
+  "devDependencies": {
+    "esbuild": "^0.14.38"
+  },
+  "dependencies": {
+    "esno": "^0.14.1"
+  }
+}

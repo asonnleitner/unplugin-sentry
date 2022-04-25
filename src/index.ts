@@ -1,14 +1,13 @@
 import { createUnplugin } from 'unplugin'
 import type { SentryCliPluginOptions } from './types'
 import createSentryCli from './core/cli'
-import { ensureKey } from './utils'
 
 export default createUnplugin<Partial<SentryCliPluginOptions>>(
   (options, meta) => {
-    const sentry = createSentryCli(options)
+    const cli = createSentryCli(options, meta)
 
     return {
-      name: 'unplugin-sentry',
+      name: 'sentry-unplugin',
       enforce: 'post',
 
       vite: {},
@@ -20,7 +19,7 @@ export default createUnplugin<Partial<SentryCliPluginOptions>>(
       esbuild: {},
 
       buildEnd() {
-        console.log('[unplugin-sentry]', 'buildEnd')
+        debugger
       }
     }
   }

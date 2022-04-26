@@ -1,6 +1,8 @@
 import { resolve } from 'path'
 import { default as HtmlWebpackPlugin } from 'html-webpack-plugin'
 import SentryPlugin from '../../dist/webpack'
+import type { Configuration } from 'webpack'
+import config from '../config'
 
 module.exports = {
   entry: ['./main.ts'],
@@ -31,6 +33,8 @@ module.exports = {
       filename: 'index.html',
       template: './index.html'
     }),
-    SentryPlugin()
+    SentryPlugin({
+      ...config
+    })
   ]
-}
+} as Configuration

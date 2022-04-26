@@ -10,7 +10,8 @@ import type { SourceMapsPathDescriptor } from '@sentry/cli'
 export { SourceMapsPathDescriptor }
 
 export interface SentryCliPluginOptions
-  extends Pick<
+  extends SentryCliCommitsOptions,
+    Pick<
       SentryCliOptions,
       | 'url'
       | 'authToken'
@@ -111,7 +112,7 @@ export interface SentryCliPluginOptions
   errorHandler?: (
     err: Error,
     invokeErr: () => void,
-    compilation: unknown
+    compilation?: unknown
   ) => void
 
   /**

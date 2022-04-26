@@ -5,6 +5,7 @@ import typescript from '@rollup/plugin-typescript'
 import { terser } from 'rollup-plugin-terser'
 import html from '@rollup/plugin-html'
 import SentryPlugin from '../../dist/rollup'
+import config from '../config'
 
 const makeHtmlAttributes = (attributes) => {
   if (!attributes) {
@@ -75,7 +76,9 @@ const rollupConfig = defineConfig({
 </html>`
       }
     }),
-    SentryPlugin()
+    SentryPlugin({
+      ...config
+    })
   ]
 })
 

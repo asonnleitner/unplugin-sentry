@@ -3,25 +3,19 @@ import type {
   SentryCliUploadSourceMapsOptions,
   SentryCliNewDeployOptions
 } from '@sentry/cli'
-import SentryCli from '@sentry/cli'
 import type { SentryCliPluginOptions } from '../types'
+import type { UnpluginContextMeta } from 'unplugin'
 import { toArray } from '../utils/array'
 import { createLogger } from '../utils/logger'
-import type { UnpluginContextMeta } from 'unplugin'
+import SentryCli from '@sentry/cli'
 
 const createSentryCli = (
-  options?: Partial<SentryCliPluginOptions>,
+  options: SentryCliPluginOptions,
   meta?: UnpluginContextMeta
-): {
-  releases: SentryCli['releases']
-  options: SentryCli['options'] & SentryCliPluginOptions
-  configFile: SentryCli['configFile']
-} => {
-  options = { rewrite: true, finalize: true, ...options }
-
+): SentryCli => {
   const debugLog = createLogger(options, meta)
 
-  if (options && 'include' in options) {
+  if (options.include) {
     options.include = toArray(options.include)
 
     options.include.forEach((entry) => {
@@ -31,7 +25,7 @@ const createSentryCli = (
     })
   }
 
-  if (options && options.ignore) {
+  if (options.ignore) {
     options.ignore = toArray(options.ignore)
   }
 
@@ -46,32 +40,32 @@ const createSentryCli = (
     customHeader: options?.customHeader
   })
 
-  if (options && options.dryRun) {
+  if (options.dryRun) {
     debugLog('Running in dry-run mode')
-    const cli: SentryCli = {
+    return {
       releases: {
         new: (release: string, options?: { projects: string[] } | string[]) => {
           debugLog(`creating new release: "${release}"`, options)
           return Promise.resolve(release)
         },
-        setCommits: (release: string, config: SentryCliCommitsOptions) => {
-          debugLog('calling set-commits with:\n', config)
+        setCommits: (release: string, options: SentryCliCommitsOptions) => {
+          debugLog(`calling set-commits with for "${release}":`, options)
           return Promise.resolve(release)
         },
         finalize: (release: string) => {
-          debugLog(`finalizing release: "${release}"`)
+          debugLog(`finalizing release "${release}"`)
           return Promise.resolve(release)
         },
         proposeVersion: async () => {
-          const version = await cli.releases.proposeVersion()
-          debugLog(`proposed version: "${version}"`)
-          return version
+          const release = await cli.releases.proposeVersion()
+          debugLog(`proposed version: "${release}"`)
+          return release
         },
         uploadSourceMaps: (
           release: string,
           options: SentryCliUploadSourceMapsOptions
         ) => {
-          debugLog('calling upload-sourcemaps with:\n', options)
+          debugLog(`calling upload-sourcemaps for "${release}" with:`, options)
           return Promise.resolve(release)
         },
         listDeploys(release: string) {
@@ -79,27 +73,22 @@ const createSentryCli = (
           return Promise.resolve(release)
         },
         newDeploy: (release: string, options: SentryCliNewDeployOptions) => {
-          debugLog('calling deploy with:\n', options)
+          debugLog(`calling deploy for "${release}" with:`, options)
           return Promise.resolve(release)
         },
-        // @ts-ignore
         execute: (args: string[], live: boolean) => {
-          debugLog('calling execute with:\n', args)
-          return Promise.resolve(args)
+          debugLog(`calling execute with: ${args.join(' ')}`, { live })
+          return Promise.resolve(args.join(' '))
         }
+      },
+      options: { ...options, ...cli.options },
+      execute(args: string[], live: boolean): Promise<string> {
+        debugLog(`calling execute with: ${args.join(' ')}`, { live })
+        return Promise.resolve(args.join(' '))
       }
     }
-    return {
-      configFile: options.configFile || cli.configFile,
-      releases: cli.releases,
-      options: { ...options, ...cli.options } as SentryCliPluginOptions
-    }
   } else {
-    return {
-      configFile: options.configFile || cli.configFile,
-      releases: cli.releases,
-      options: { ...options, ...cli.options } as SentryCliPluginOptions
-    }
+    return cli
   }
 }
 

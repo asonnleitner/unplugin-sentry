@@ -8,7 +8,8 @@
     "dev": "tsup --watch src",
     "dev:compilers:build": "pnpm run dev:build --recursive --stream --parallel --filter '{playground}'",
     "build:fix": "esno scripts/postbuild.ts",
-    "watch:cli": "nodemon src/core/cli.ts --exec 'esno'"
+    "watch:cli": "nodemon src/core/cli.ts --exec 'esno'",
+    "watch:release": "nodemon src/core/release.ts --exec 'esno'"
   },
   "dependencies": {
     "@sentry/cli": "^2.0.3",

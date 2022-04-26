@@ -3,6 +3,7 @@ import fs from 'fs'
 import { resolve } from 'path'
 import esbuild from 'esbuild'
 import SentryPlugin from '../../dist/esbuild'
+import config from '../config'
 
 const dist = resolve(__dirname, 'dist')
 const htmlTemplate = resolve(__dirname, './index.html')
@@ -26,7 +27,11 @@ const build = () => {
       sourcemap: process.argv.includes('--production'),
       bundle: true,
       watch: !process.argv.includes('--production'),
-      plugins: [SentryPlugin()]
+      plugins: [
+        SentryPlugin({
+          ...config
+        })
+      ]
     })
     .then(() => {
       cpHtml(htmlTemplate, resolve(dist, 'index.html'))

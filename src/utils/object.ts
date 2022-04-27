@@ -4,6 +4,9 @@ import type { DeepMerge } from '../types'
 const isReadableObject = (item: any): item is Object =>
   isObject(item) && !Array.isArray(item)
 
+export const simpleCopy = <T>(obj: T): T =>
+  isObject(obj) ? JSON.parse(JSON.stringify(obj)) : obj
+
 export const objectKeys = <T extends object>(obj: T) =>
   Object.keys(obj) as Array<keyof T>
 

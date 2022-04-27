@@ -6,6 +6,6 @@
     "moduleResolution": "Node",
     "esModuleInterop": true,
     "strict": true,
-    "types": ["node", "jest"]
+    "types": ["node", "jest", "webpack-sources"]
   }
 }

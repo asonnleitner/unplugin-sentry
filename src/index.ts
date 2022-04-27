@@ -1,17 +1,25 @@
-import { createUnplugin } from 'unplugin'
 import type { SentryCliPluginOptions } from './types'
-import createSentryCli from './core/cli'
-import { createRelease } from './core/release'
-import { createLogger } from './utils/logger'
-import type { SentryCliUploadSourceMapsOptions } from '@sentry/cli'
+import { createUnplugin } from 'unplugin'
+import {
+  createSentryCli,
+  createRelease,
+  injectSentryLoader
+} from './core/sentry'
+import { createLogger } from './utils'
+import { finalizeRelease } from './core/finalize'
+import { injectRelease, injectReleaseWithDebug } from './webpack/inject'
+import {
+  attachAfterCodeGenerationHook,
+  attachAfterEmitHook
+} from './webpack/hooks'
 
 export default createUnplugin<SentryCliPluginOptions>((options, meta) => {
   if (!options) throw new Error('[sentry-unplugin] options is required.')
-  const opts = { rewrite: true, finalize: true, ...options }
+  const pluginOptions = { rewrite: true, finalize: true, ...options }
 
-  const cli = createSentryCli(opts, meta)
-  const releasePromise = createRelease(cli, opts)
-  const debugLog = createLogger(opts, meta)
+  const cli = createSentryCli(pluginOptions, meta)
+  const releasePromise = createRelease(cli, pluginOptions)
+  const debugLog = createLogger(pluginOptions, meta)
 
   return {
     name: 'sentry-unplugin',
@@ -26,6 +34,42 @@ export default createUnplugin<SentryCliPluginOptions>((options, meta) => {
     },
 
     webpack(compiler) {
+      const compilerOptions = {
+        ...compiler.options,
+        module: { ...compiler.options.module },
+        output: { ...compiler.options.output }
+      }
+
+      if (pluginOptions.debug) {
+        debugLog('injecting release with debug')
+        injectReleaseWithDebug(
+          compilerOptions,
+          pluginOptions,
+          releasePromise,
+          meta
+        )
+      } else {
+        debugLog('injecting release')
+        injectRelease(compilerOptions, pluginOptions, releasePromise)
+      }
+
+      attachAfterCodeGenerationHook(compiler, pluginOptions, releasePromise)
+
+      attachAfterEmitHook(compiler, (compilation, callback) => {
+        console.log('Sentry CLI Plugin: Uploading source maps')
+        if (
+          !pluginOptions.include ||
+          !(pluginOptions.include as any[]).length
+        ) {
+          if (compilerOptions.output.path) {
+            pluginOptions.include = [compilerOptions.output.path]
+          }
+        }
+
+        finalizeRelease(cli, pluginOptions, releasePromise, compilation).then(
+          () => callback()
+        )
+      })
       // ...
     },
 
@@ -33,79 +77,30 @@ export default createUnplugin<SentryCliPluginOptions>((options, meta) => {
       // ...
     },
 
+    transformInclude(id) {
+      return id.endsWith('sentry.module.js')
+    },
+
+    async transform(code, id) {
+      const injectCode = await injectSentryLoader(pluginOptions, releasePromise)
+      return code + '\n' + injectCode
+    },
+
     async buildEnd() {
-      const { include, errorHandler = (_, invokeErr) => invokeErr() } = opts
-      try {
-        const release = await releasePromise
-
-        if (!include) new Error('[sentry-unplugin] include is required.')
-        if (!release)
-          new Error(
-            '[sentry-unplugin] Unable to determine release. Make sure to include `release` option or use a environment that supports auto-detection.\nhttps://docs.sentry.io/cli/releases/#creating-releases'
-          )
-
-        // create new release
-        await cli.releases.new(release)
-
-        // clean artifacts
-        if (opts.cleanArtifacts) {
-          await cli.releases.execute(
-            ['releases', 'files', release, 'delete', '--all'],
-            true
-          )
-        }
-
-        // upload sourcemaps
-        await cli.releases.uploadSourceMaps(
-          release,
-          opts as SentryCliUploadSourceMapsOptions
-        )
-
-        // set commit
-        const {
-          auto,
-          repo,
-          commit,
-          previousCommit,
-          ignoreMissing,
-          ignoreEmpty
-        } = opts.setCommits || opts
-
-        if (auto || (repo && commit)) {
-          await cli.releases.setCommits(release, {
-            auto,
-            repo,
-            commit,
-            previousCommit,
-            ignoreMissing,
-            ignoreEmpty
-          })
-        }
-
-        // finalize
-        if (opts.finalize) {
-          await cli.releases.finalize(release)
-        }
-
-        // new deployment
-        const { env, started, finished, time, name, url } = opts.deploy || {}
-        if (env) {
-          await cli.releases.newDeploy(release, {
-            env,
-            started,
-            finished,
-            time,
-            name,
-            url
-          })
-        }
-      } catch (err) {
-        errorHandler(
-          err as Error,
-          () => new Error(`[sentry-unplugin] ${(err as Error).message}`),
-          debugLog
-        )
-      }
+      // await finalizeRelease(cli, pluginOptions, releasePromise)
+    },
+    generateBundle() {
+      // const ref = this.emitFile({
+      //   type: 'asset',
+      //   fileName: 'sentry-cli.js',
+      //   source: `
+      //     const SentryCli = require('${meta.framework}')
+      //     module.exports = SentryCli
+      //   `
+      // })
+      //
+      // const fileName = this.getFileName(ref)
+      // console.log({ fileName, ref })
     }
   }
 })

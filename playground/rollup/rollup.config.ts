@@ -21,6 +21,7 @@ const makeHtmlAttributes = (attributes) => {
 
 const rollupConfig = defineConfig({
   input: './main.ts',
+
   output: [
     {
       file: './dist/index.js',
@@ -28,6 +29,7 @@ const rollupConfig = defineConfig({
       sourcemap: true
     }
   ],
+
   plugins: [
     typescript({
       compilerOptions: {

@@ -1,13 +1,22 @@
-import { resolve, basename } from 'node:path'
-import { readFile, writeFile } from 'node:fs/promises'
+import { resolve, basename, parse } from 'node:path'
+import { readFile, writeFile, copyFile } from 'node:fs/promises'
 import fg from 'fast-glob'
 import chalk from 'chalk'
+import { SENTRY_LOADER, SENTRY_MODULE } from '../src/webpack/constants'
+
+const copySentryFiles = async (dist: string) => {
+  for (const file of [SENTRY_LOADER, SENTRY_MODULE]) {
+    await copyFile(file, resolve(dist, basename(file)))
+  }
+}
 
 const main = async () => {
+  const dist = resolve(__dirname, '../dist')
+
   const files = await fg('*.js', {
     ignore: ['chunk-*'],
     absolute: true,
-    cwd: resolve(__dirname, '../dist')
+    cwd: dist
   })
 
   for (const file of files) {
@@ -26,6 +35,9 @@ const main = async () => {
       `export { default } from './dist/${name}'\n`
     )
   }
+
+  // copy files to dist
+  await copySentryFiles(dist)
 }
 
 main().catch(console.error)

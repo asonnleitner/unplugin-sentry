@@ -1,38 +1,29 @@
 import { resolve } from 'path'
-import { default as HtmlWebpackPlugin } from 'html-webpack-plugin'
 import SentryPlugin from '../../dist/webpack'
+// import SentryCliPlugin from '@sentry/webpack-plugin'
 import type { Configuration } from 'webpack'
 import config from '../config'
 
 module.exports = {
   entry: ['./main.ts'],
-  devtool: 'source-map',
-  mode: 'production',
+  // devtool: 'inline-source-map',
+  output: {
+    filename: '[name].bundle.js',
+    path: resolve(__dirname, 'dist')
+  },
   module: {
     rules: [
       {
         test: /\.tsx?$/,
-        use: 'ts-loader',
-        exclude: /node_modules/
-      },
-      {
-        test: /\.html$/,
-        use: ['html-loader']
+        exclude: /(node_modules|bower_components)/,
+        use: 'ts-loader'
       }
     ]
   },
   resolve: {
-    extensions: ['.ts', '.js', '.html']
-  },
-  output: {
-    filename: 'index.[contenthash].js',
-    path: resolve(__dirname, 'dist')
+    extensions: ['.jsx', '.ts', '.tsx']
   },
   plugins: [
-    new HtmlWebpackPlugin({
-      filename: 'index.html',
-      template: './index.html'
-    }),
     SentryPlugin({
       ...config
     })

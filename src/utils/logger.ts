@@ -3,20 +3,20 @@ import type { SentryCliPluginOptions } from '../types'
 import type { UnpluginContextMeta } from 'unplugin'
 
 export const createLogger =
-  (options: Partial<SentryCliPluginOptions>, meta?: UnpluginContextMeta) =>
+  (pluginOptions: SentryCliPluginOptions, pluginMeta: UnpluginContextMeta) =>
   (label: string, data?: any) => {
-    if (options.silent) return
+    if (pluginOptions.silent) return
 
     if (data !== undefined) {
       console.log(
         `[sentry-unplugin${
-          meta && meta.framework ? '-' + meta.framework : ''
+          pluginMeta && pluginMeta.framework ? '-' + pluginMeta.framework : ''
         }] ${label} ${inspect(data, false, null, true)}`
       )
     } else {
       console.log(
         `[sentry-unplugin${
-          meta && meta.framework ? '-' + meta.framework : ''
+          pluginMeta && pluginMeta.framework ? '-' + pluginMeta.framework : ''
         }] ${label}`
       )
     }

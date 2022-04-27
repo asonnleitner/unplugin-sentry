@@ -2,7 +2,8 @@
   "private": true,
   "scripts": {
     "dev": "nodemon --watch '../../src/**/*.ts' --ext .ts --exec 'vite'",
-    "dev:build": "nodemon --watch '../../src/**/*.ts' --ext .ts --exec 'vite build'"
+    "dev:build": "nodemon --watch '../../src/**/*.ts' --ext .ts --exec 'vite build'",
+    "preview": "vite preview"
   },
   "devDependencies": {
     "vite": "^2.9.5",
